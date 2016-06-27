@@ -9,3 +9,6 @@ We're aiming for https://datatracker.ietf.org/wg/opsawg/documents/
 = Tools =
 * https://tools.ietf.org/
 * https://tools.ietf.org/tools/idnits/
+* apt-get/brew install xml2rfc
+* https://github.com/miekg/mmark
+
