@@ -62,14 +62,75 @@ Table of Contents
 
    1.  Overview and Rational . . . . . . . . . . . . . . . . . . . .   2
    2.  Metrics Format  . . . . . . . . . . . . . . . . . . . . . . .   2
-   3.  Discussion  . . . . . . . . . . . . . . . . . . . . . . . . .   2
-   4.  Security Considerations . . . . . . . . . . . . . . . . . . .   2
-   Appendix A.  History  . . . . . . . . . . . . . . . . . . . . . .   2
-   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .   4
+   3.  Discussion  . . . . . . . . . . . . . . . . . . . . . . . . .   3
+   4.  Security Considerations . . . . . . . . . . . . . . . . . . .   3
+   Appendix A.  History  . . . . . . . . . . . . . . . . . . . . . .   3
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .   5
 
 1.  Overview and Rational
 
 2.  Metrics Format
+
+   The protocol is line-oriented.  A line-feed character ("\n")
+   separates lines.  The last line must end with a line-feed character.
+
+   Empty lines are ignored.
+
+   Within a line, tokens can be separated by any number of blanks and/or
+   tabs (and have to be separated by at least one if they would
+   otherwise merge with the previous token).
+
+   Leading and trailing whitespace is ignored.
+
+   Lines with a "#" as the first non-whitespace character are comments.
+   They are ignored unless the first token after "#" is either "HELP" or
+   "TYPE".  Those lines are treated as follows:
+
+   o  If the token is "HELP", at least one more token is expected, which
+      is the metric name.  All remaining tokens are considered the
+      docstring for that metric name.  "HELP" lines may contain any
+      sequence of UTF-8 characters (after the metric name), but the
+      backslash and the line-feed characters have to be escaped as "\"
+      and "\n", respectively.  Only one "HELP" line may exist for the
+      same metric name.
+
+   o  If the token is "TYPE", exactly two more tokens are expected.  The
+      first is the metric name, and the second is either "counter",
+      "gauge", "summary", or "untyped", defining the type for the metric
+      of that name.  Only one "TYPE" line may exist for the same metric
+      name.  The "TYPE" line for a metric name has to appear before the
+      first sample is reported for that metric name.  If there is no
+      "TYPE" line for a metric name, the type is set to "untyped".
+      Remaining lines describe samples, one per line, with the following
+      syntax (EBNF):
+
+
+
+
+
+
+Proud                   Expires December 29, 2016               [Page 2]
+
+Internet-Draft      Labeled metrics exposition format          June 2016
+
+
+metric_name [ "{" label_name "=" `"` label_value `"` { "," label_name "=" `"` label_value `"` } [ "," ] "}" ] value [ timestamp ]
+
+                             Text format EBNF
+
+   metric_name and label_name have the usual Prometheus expression
+   language restrictions. label_value can be any sequence of UTF-8
+   characters, but the backslash, the double-quote, and the line-feed
+   characters have to be escaped as "\", "\"", and "\n", respectively.
+   value is a float, and timestamp an int64 (milliseconds since epoch,
+   i.e. 1970-01-01 00:00:00 UTC, excluding leap seconds), represented as
+   required by the Go strconv package (cf. functions ParseInt and
+   ParseFloat).  In particular, Nan, +Inf, and -Inf are valid values.
+   The type summary is difficult to represent in the text format.  The
+   following conventions apply: Each quantile x is given as a separate
+   sample, each with a label .  The sample sum for a summary named x is
+   given as a separate sample named x_sum.  The sample count for a
+   summary named x is given as a separate sample named x_count.
 
 3.  Discussion
 
@@ -101,18 +162,19 @@ Appendix A.  History
    Protocol Buffers.  Why not Avro or Message Pack?  They were immature
    and lacked the single site IDL file.  Why not Thrift?  It is an
    inferior reverse engineering of Protocol Buffers, and many of its
+
+
+
+Proud                   Expires December 29, 2016               [Page 3]
+
+Internet-Draft      Labeled metrics exposition format          June 2016
+
+
    language-specific generated code emitters exhibited bugs and
    inconsistencies (e.g., in 2012, the encoding for the first enum value
    in Thrift in its binary wire format was "0" or "1" depending on which
    language you used even from the same Thrift release).  Sorry, that is
    Mickey Mouse stuff.
-
-
-
-Proud                   Expires December 29, 2016               [Page 2]
-
-Internet-Draft      Labeled metrics exposition format          June 2016
-
 
    The text format emerged strictly to support two cases: no Protocol
    Buffer support in an environment (e.g., shell script) and support
@@ -156,19 +218,17 @@ Internet-Draft      Labeled metrics exposition format          June 2016
    metrics and possibly for the metrics producers/clients to maintain
    more state on the receiver, what has been sent, how old, publication
    interval, extra configuration, etc.  Pull was simply easier.  It also
-   meant all that a client required was to have support for HTTP, which
-   is ubiquitous.  Supporting push directly is more practical these
-   days, but ...
 
 
 
-
-
-
-Proud                   Expires December 29, 2016               [Page 3]
+Proud                   Expires December 29, 2016               [Page 4]
 
 Internet-Draft      Labeled metrics exposition format          June 2016
 
+
+   meant all that a client required was to have support for HTTP, which
+   is ubiquitous.  Supporting push directly is more practical these
+   days, but ...
 
    In terms of metric design (not wire format), these metric types match
    most software, industrial, and sciences use cases.  Other metric
@@ -217,8 +277,4 @@ Author's Address
 
 
 
-
-
-
-
-Proud                   Expires December 29, 2016               [Page 4]
+Proud                   Expires December 29, 2016               [Page 5]

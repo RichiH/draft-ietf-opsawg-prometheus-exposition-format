@@ -31,6 +31,33 @@
 
 # Metrics Format
 
+The protocol is line-oriented. A line-feed character (“\n”) separates lines. The last line must end with a line-feed character.
+
+Empty lines are ignored.
+
+Within a line, tokens can be separated by any number of blanks and/or tabs (and have to be separated by at least one if they would otherwise merge with the previous token).
+
+Leading and trailing whitespace is ignored.
+
+Lines with a “#” as the first non-whitespace character are comments. They are ignored unless the first token after “#” is either “HELP” or “TYPE”. Those lines are treated as follows:
+
+* If the token is "HELP", at least one more token is expected, which is the metric name. All remaining tokens are considered the docstring for that metric name. "HELP" lines may contain any sequence of UTF-8 characters (after the metric name), but the backslash and the line-feed characters have to be escaped as "\\" and "\n", respectively. Only one "HELP" line may exist for the same metric name.
+* If the token is "TYPE", exactly two more tokens are expected. The first is the metric name, and the second is either "counter", "gauge", "summary", or "untyped", defining the type for the metric of that name. Only one "TYPE" line may exist for the same metric name. The "TYPE" line for a metric name has to appear before the first sample is reported for that metric name. If there is no "TYPE" line for a metric name, the type is set to "untyped".
+Remaining lines describe samples, one per line, with the following syntax (EBNF):
+
+~~~
+metric_name [ "{" label_name "=" `"` label_value `"` { "," label_name "=" `"` label_value `"` } [ "," ] "}" ] value [ timestamp ]
+~~~
+Figure: Text format EBNF
+
+metric_name and label_name have the usual Prometheus expression language restrictions. label_value can be any sequence of UTF-8 characters, but the backslash, the double-quote, and the line-feed characters have to be escaped as "\\", `\"`, and "\n", respectively.
+value is a float, and timestamp an int64 (milliseconds since epoch, i.e. 1970-01-01 00:00:00 UTC, excluding leap seconds), represented as required by the Go strconv package (cf. functions ParseInt and ParseFloat). In particular, Nan, +Inf, and -Inf are valid values.
+The type summary is difficult to represent in the text format. The following conventions apply:
+Each quantile x is given as a separate sample, each with a label {quantile="x"}.
+The sample sum for a summary named x is given as a separate sample named x_sum.
+The sample count for a summary named x is given as a separate sample named x_count.
+
+
 # Discussion
 
 # Security Considerations
