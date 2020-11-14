@@ -1,3 +1,5 @@
+PLEASE ALSO SEE https://github.com/OpenObservability/OpenMetrics
+
 We're aiming for https://datatracker.ietf.org/wg/opsawg/documents/
 
 = Guidelines =
